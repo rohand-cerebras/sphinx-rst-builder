@@ -483,7 +483,7 @@ class RstTranslator(TextTranslator):
     def visit_list_item(self, node):
         if self.list_counter[-1] == -1:
             # bullet list
-            self.new_state(self.indent)
+            self.new_state(indent=2)
         elif self.list_counter[-1] == -2:
             # definition list
             pass
