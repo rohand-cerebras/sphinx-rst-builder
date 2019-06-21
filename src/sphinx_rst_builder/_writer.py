@@ -78,7 +78,7 @@ class RstTranslator(TextTranslator):
     def new_state(self, indent=STDINDENT):
         self.states.append([])
         self.stateindent.append(indent)
-    def end_state(self, wrap=True, end=[''], first=None):
+    def end_state(self, wrap=False, end=[''], first=None):
         content = self.states.pop()
         maxindent = sum(self.stateindent)
         indent = self.stateindent.pop()
@@ -196,8 +196,8 @@ class RstTranslator(TextTranslator):
             self.add_text('``')
 
     def visit_desc_name(self, node):
-        # self.log_unknown("desc_name", node)
-        pass
+        self.add_text(node.rawsource)
+        raise nodes.SkipNode
     def depart_desc_name(self, node):
         pass
 
@@ -701,10 +701,20 @@ class RstTranslator(TextTranslator):
         format.
         """
         if 'refuri' not in node:
-            self.add_text('`%s`_' % node['name'])
+            if 'name' in node:
+                self.add_text('`%s`_' % node['name'])
+            elif 'refid' in node:
+                # We do not produce the necessary link targets to
+                # produce a link here.
+                return
+            else:
+                raise NotImplementedError
             raise nodes.SkipNode
         elif 'internal' not in node:
-            self.add_text('`%s <%s>`_' % (node['name'], node['refuri']))
+            if 'name' in node:
+                self.add_text('`%s <%s>`_' % (node['name'], node['refuri']))
+            else:
+                self.add_text('`%s <%s>`_' % (node['refuri'], node['refuri']))
             raise nodes.SkipNode
         elif 'reftitle' in node:
             # Include node as text, rather than with markup.
