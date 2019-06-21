@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-    sphinxcontrib.builders.rst
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SPDX-License-Identifier: BSD-2-Clause
+"""ReST Sphinx builder.
 
-    ReST Sphinx builder.
-
-    :copyright: Copyright 2012-2013 by Freek Dijkstra.
-    :license: BSD, see LICENSE.txt for details.
 """
 
 from __future__ import (print_function, unicode_literals, absolute_import)
@@ -18,7 +13,7 @@ from docutils.io import StringOutput
 
 from sphinx.builders import Builder
 from sphinx.util.osutil import ensuredir, os_path, SEP
-from ..writers.rst import RstWriter
+from ._writer import RstWriter
 
 
 # Clone of relative_uri() sphinx.util.osutil, with bug-fixes

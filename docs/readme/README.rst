@@ -1,8 +1,6 @@
-.. -*- restructuredtext -*-
-
-=======================
-README for reST Builder
-=======================
+===============================
+Sphinx reStructuredText Builder
+===============================
 
 Sphinx_ extension to build reST (reStructuredText_) files.
 
@@ -16,8 +14,8 @@ file from Sphinx_ and outputs it as reST.
 Requirements
 ============
 
-* Sphinx_ 1.0 or later
-* Python 2.6 or later
+* Sphinx_ 2.0 or later
+* Python 3.6 or later
 
 Installing
 ==========
@@ -25,13 +23,13 @@ Installing
 Using pip
 ---------
 
-    pip install sphinxcontrib-restbuilder
+    pip install sphinx-rst-builder
 
 Manual
 ------
 
-    hg clone http://bitbucket.org/birkenfeld/sphinx-contrib
-    cd sphinx-contrib/restbuilder
+    git clone https://github.com/davidfritzsche/sphinx-rst-builder.git
+    cd sphinx-rst-builder
     python setup.py install
 
 If you want to take a look and have a try, you can put the reST builder in
@@ -42,16 +40,18 @@ look for it:
 
     sys.path.append(os.path.abspath('exts'))
 
+
 Usage
 =====
 
 - Set the builder as a extension in ``conf.py``:
 
-    extensions = ['sphinxcontrib.restbuilder']
+    extensions = ['sphinx_rst_builder']
 
 - Run sphinx-build with target ``rst``:
 
     sphinx-build -b rst -c . build/rst
+
 
 Configuration
 =============
@@ -82,9 +82,13 @@ The following four configuration variables are defined by sphinxcontrib.restbuil
 Further Reading
 ===============
 
+* Sphinx_
+* reStructuredText_
+
 .. _Sphinx: http://sphinx-doc.org/
 .. _`sphinx-contrib`: http://bitbucket.org/birkenfeld/sphinx-contrib
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
+
 
 Feedback
 ========

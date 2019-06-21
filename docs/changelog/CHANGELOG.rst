@@ -1,6 +1,11 @@
 Changelog
 =========
 
+sphinx-rst-builder 0.0.1 (21 June 2019)
+---------------------------------------
+* Renamed from sphinxcontrib.restbuilder to sphinx-rst-builder
+* Code location: https://github.com/davidfritzsche/sphinx-rst-builder
+
 restbuilder 0.2 (7 June 2018)
 --------------------------------
 * Code moved to https://gitub.com/sphinx-contrib/restbuilder

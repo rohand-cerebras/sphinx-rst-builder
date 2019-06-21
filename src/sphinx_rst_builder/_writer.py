@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-    sphinxcontrib.writers.rst
-    ~~~~~~~~~~~~~~~~~~~~~~~~~
+# SPDX-License-Identifier: BSD-2-Clause
+"""Custom docutils writer for ReStructuredText.
 
-    Custom docutils writer for ReStructuredText.
-
-    :copyright: Copyright 2012-2013 by Freek Dijkstra.
-    :license: BSD, see LICENSE.txt for details.
 """
 
 from __future__ import (print_function, unicode_literals, absolute_import)

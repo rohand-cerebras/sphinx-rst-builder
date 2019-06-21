@@ -1,4 +1,7 @@
-Copyright (c) 2012-2018 by Freek Dijkstra and contributors.
+BSD-2-Clause License
+====================
+
+Copyright (c) 2019 by David Fritzsche and contributors.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are

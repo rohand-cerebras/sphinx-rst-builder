@@ -1,4 +1,13 @@
+*.egg-info
+*.pyc
+*.whl
+*~
+.doctrees
+.envrc
+.hypothesis
+.mypy_cache
+.tox
+.venv
+__pychache__
 build/
 dist/
-sphinxcontrib/__pycache__
-sphinxcontrib_restbuilder.egg-info
