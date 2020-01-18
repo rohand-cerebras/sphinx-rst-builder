@@ -6,6 +6,7 @@
 
 from __future__ import (print_function, unicode_literals, absolute_import)
 
+import inspect
 import os
 import sys
 import re
@@ -17,6 +18,9 @@ from docutils import nodes, writers
 from sphinx import addnodes
 from sphinx.locale import admonitionlabels, versionlabels, _
 from sphinx.writers.text import TextTranslator, MAXWIDTH, STDINDENT
+
+
+_log = logging.getLogger("sphinx_rst_builder.writer")
 
 
 class RstWriter(writers.Writer):
@@ -62,12 +66,11 @@ class RstTranslator(TextTranslator):
         self.wrapper = textwrap.TextWrapper(width=STDINDENT, break_long_words=False, break_on_hyphens=False)
 
     def log_unknown(self, type, node):
-        logger = logging.getLogger("sphinxcontrib.writers.rst")
-        if len(logger.handlers) == 0:
+        if len(_log.handlers) == 0:
             # Logging is not yet configured. Configure it.
             logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(levelname)-8s %(message)s')
-            logger = logging.getLogger("sphinxcontrib.writers.rst")
-        logger.warning("%s(%s) unsupported formatting" % (type, node))
+            _log = logging.getLogger("sphinxcontrib.writers.rst")
+        _log.warning("%s(%s) unsupported formatting" % (type, node))
 
     def wrap(self, text, width=STDINDENT):
         self.wrapper.width = width
@@ -75,10 +78,14 @@ class RstTranslator(TextTranslator):
 
     def add_text(self, text):
         self.states[-1].append((-1, text))
+
     def new_state(self, indent=STDINDENT):
+        _log.debug("new_state %s", inspect.stack()[1][3])
         self.states.append([])
         self.stateindent.append(indent)
+
     def end_state(self, wrap=False, end=[''], first=None):
+        _log.debug("end state %s", inspect.stack()[1][3])
         content = self.states.pop()
         maxindent = sum(self.stateindent)
         indent = self.stateindent.pop()
@@ -107,6 +114,7 @@ class RstTranslator(TextTranslator):
             if item:
                 result.insert(0, (itemindent - indent, [first + item[0]]))
                 result[1] = (itemindent, item[1:])
+
         self.states[-1].extend(result)
 
     def visit_document(self, node):
@@ -602,25 +610,24 @@ class RstTranslator(TextTranslator):
             self.add_text(versionlabels[node['type']] % node['version'] + ': ')
         else:
             self.add_text(versionlabels[node['type']] % node['version'] + '.')
+
     def depart_versionmodified(self, node):
         self.end_state()
 
     def visit_literal_block(self, node):
+        lang = node.get('language', 'default')
         if node.rawsource != node.astext():
             # most probably a parsed-literal block -- don't highlight
-            return super().visit_literal_block(node)
-
-        lang = node.get('language', 'default')
-        linenos = node.get('linenos', False)
-
-        if lang == 'default':
+            self.add_text("::")
+        elif lang == 'default':
             self.add_text("::")
         else:
-            self.add_text(".. code-block:: {}\n".format(lang))
-            if node.get('linenos', False):
-                self.add_text("   :linenos:")
+            self.add_text(".. code-block:: %s" % lang)
+            if self.builder.config.rst_preserve_code_block_flags:
+                if node.get('linenos', False):
+                    self.add_text("\n   :linenos:")
 
-            self.new_state(self.indent)
+        self.new_state(self.indent)
 
     def depart_literal_block(self, node):
         self.end_state(wrap=False)

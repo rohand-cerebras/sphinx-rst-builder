@@ -4,6 +4,7 @@
 
 """
 
+from sphinx.application import Sphinx
 from sphinx.builders import Builder
 from sphinx.writers.text import STDINDENT
 
@@ -12,7 +13,7 @@ from ._writer import RstWriter
 
 
 
-def setup(app):
+def setup(app: Sphinx):
     """Setup this extension"""
     app.require_sphinx('2.0')
     app.add_builder(RstBuilder)
@@ -25,3 +26,4 @@ def setup(app):
     app.add_config_value('rst_link_transform', None, False)
     """Function to translate a docname to a (partial) URI. By default, returns docname + rst_link_suffix."""
     app.add_config_value('rst_indent', STDINDENT, False)
+    app.add_config_value('rst_preserve_code_block_flags', False, 'env')

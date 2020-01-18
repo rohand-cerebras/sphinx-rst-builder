@@ -3,6 +3,18 @@ Changelog
 *********
 
 
+sphinx-rst-builder NEXT
+=======================
+
+* Add new config value *rst_preserve_code_black_flags* to retain
+  (some) flage to ``.. code-block:``
+
+* Preserve ``.. code-block::``. (`#2 <https://github.com/davidfritzsche/sphinx-rst-builder/pull/2>`_)
+
+* Drop the overridden ``relative_uri()``
+  method. (`#1 <https://github.com/davidfritzsche/sphinx-rst-builder/pull/1>`_)
+
+
 sphinx-rst-builder 0.0.1 (21 June 2019)
 =======================================
 

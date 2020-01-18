@@ -78,6 +78,10 @@ The following four configuration variables are defined by sphinxcontrib.restbuil
    Function to translate a docname to a (partial) URI. 
    By default, returns `docname` + :confval:`rst_link_suffix`.
 
+.. confval:: rst_preserve_code_block_flags
+
+   Preserve (some) ``.. code-block::`` flags if `True`. Default is `False`.
+
 
 Further Reading
 ===============
