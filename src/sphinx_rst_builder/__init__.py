@@ -12,6 +12,8 @@ from ._builder import RstBuilder
 from ._writer import RstWriter
 
 
+__version__ = "0.0.1"
+
 
 def setup(app: Sphinx):
     """Setup this extension"""
