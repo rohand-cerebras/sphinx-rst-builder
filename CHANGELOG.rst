@@ -3,8 +3,16 @@ Changelog
 *********
 
 
-sphinx-rst-builder NEXT
-=======================
+sphinx-rst-builder 0.0.3 (18. January 2020)
+===========================================
+
+* Fix changelog
+
+
+sphinx-rst-builder 0.0.2 (18. January 2020)
+===========================================
+
+* Add bumpversion config to repo
 
 * Add new config value *rst_preserve_code_black_flags* to retain
   (some) flage to ``.. code-block:``
