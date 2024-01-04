@@ -59,6 +59,10 @@ class RstTranslator(TextTranslator):
         self.list_counter = []
         self.sectionlevel = 0
         self.table = None
+        self.table_cur_row = None
+        self.table_colspec = None
+        self.table_colspan = None
+        self.table_rowspan = None
         if self.builder.config.rst_indent:
             self.indent = self.builder.config.rst_indent
         else:
@@ -362,7 +366,7 @@ class RstTranslator(TextTranslator):
         raise nodes.SkipNode
 
     def visit_colspec(self, node):
-        self.table[0].append(node['colwidth'])
+        self.table_colspec.append(node['colwidth'])
         raise nodes.SkipNode
 
     def visit_tgroup(self, node):
@@ -378,79 +382,149 @@ class RstTranslator(TextTranslator):
         pass
 
     def visit_tbody(self, node):
-        self.table.append('sep')
+        pass
     def depart_tbody(self, node):
         pass
 
     def visit_row(self, node):
-        self.table.append([])
+        if len(self.table) <= self.table_cur_row:
+            self.table.append([])
     def depart_row(self, node):
-        pass
+        self.table_cur_row += 1
 
     def visit_entry(self, node):
-        if 'morerows' in node or 'morecols' in node:
-            raise NotImplementedError('Column or row spanning cells are '
-                                      'not implemented.')
         self.new_state(0)
+
     def depart_entry(self, node):
         text = self.nl.join(self.nl.join(x[1]) for x in self.states.pop())
+        text = text.replace(self.nl, "")
         self.stateindent.pop()
-        self.table[-1].append(text)
+        self.table[self.table_cur_row].append(text)
+        if 'morecols' in node:
+            y_index = len(self.table[self.table_cur_row]) - 1
+            self.table_colspan[(self.table_cur_row, y_index)] = 1 + node["morecols"]
+            self.table[self.table_cur_row] += ["" for _ in range(node["morecols"])]
+        if 'morerows' in node:
+            y_index = len(self.table[self.table_cur_row]) - 1
+            self.table_rowspan[(self.table_cur_row, y_index)] = 1 + node["morerows"]
+            self.table += [[""] for _ in range(node["morerows"])]
 
     def visit_table(self, node):
         if self.table:
             raise NotImplementedError('Nested tables are not supported.')
         self.new_state(0)
-        self.table = [[]]
+        self.table = []
+        self.table_colspec = []
+        self.table_cur_row = 0
+        self.table_colspan = {}
+        self.table_rowspan = {}
     def depart_table(self, node):
-        lines = self.table[1:]
-        fmted_rows = []
-        colwidths = self.table[0]
-        realwidths = colwidths[:]
-        separator = 0
-        # don't allow paragraphs in table cells for now
-        for line in lines:
-            if line == 'sep':
-                separator = len(fmted_rows)
+        # Table drawing code is adapted from from https://stackoverflow.com/a/71655598
+        def isInRowspan(y, x, rowspan):
+            rowspan_value = 0
+            row_i = 0
+            for i in range(y):
+                if (i, x) in rowspan.keys():
+                    rowspan_value = rowspan[(i, x)]
+                    row_i = i
+            if rowspan_value - (y - row_i) > 0:
+                return True
             else:
-                cells = []
-                for i, cell in enumerate(line):
-                    par = self.wrap(cell, width=colwidths[i])
-                    if par:
-                        maxwidth = max(list(map(len, par)))
-                    else:
-                        maxwidth = 0
-                    realwidths[i] = max(realwidths[i], maxwidth)
-                    cells.append(par)
-                fmted_rows.append(cells)
+                return False
 
-        def writesep(char='-'):
-            out = ['+']
-            for width in realwidths:
-                out.append(char * (width+2))
-                out.append('+')
-            self.add_text(''.join(out) + self.nl)
-
-        def writerow(row):
-            lines = list(zip(*row))
-            for line in lines:
-                out = ['|']
-                for i, cell in enumerate(line):
-                    if cell:
-                        out.append(' ' + cell.ljust(realwidths[i]+1))
-                    else:
-                        out.append(' ' * (realwidths[i] + 2))
-                    out.append('|')
-                self.add_text(''.join(out) + self.nl)
-
-        for i, row in enumerate(fmted_rows):
-            if separator and i == separator:
-                writesep('=')
+        def writeCell(table, y, x, length, rowspan = {}):
+            text = table[y][x]
+            extra_spaces = ""
+            if isInRowspan(y, x, rowspan):
+                text = "|"
+                for i in range(length): #according to column width
+                    text += " "
+                return text
             else:
-                writesep('-')
-            writerow(row)
-        writesep('-')
+                for i in range(length - len(text) - 2):
+                    extra_spaces += " " #according to column width
+                return f"| {text} " + extra_spaces
+
+        def writeColspanCell(length, colspan_value): #length argument refers to sum of column widths
+            text = ""
+            for i in range(length + colspan_value - 1):
+                text += " "
+            return text
+
+        def getMaxColWidth(table, idx): #find the longest cell in the column to set the column's width
+            maxi = 0
+            for row in table:
+                if len(row) > idx: #avoid index out of range error
+                    cur_len = len(row[idx]) + 2
+                    if maxi < cur_len:
+                        maxi = cur_len
+            return maxi
+
+        def getMaxRowLen(table): #find longest row list (in terms of elements)
+            maxi = 0
+            for row in table:
+                cur_len = len(row)
+                if maxi < cur_len:
+                    maxi = cur_len
+            return maxi
+
+        def getAllColLen(table): #collect in a list the widths of each column
+            widths = [getMaxColWidth(table, i) for i in range(getMaxRowLen(table))]
+            return widths
+
+        def getMaxRowWidth(table): #set the width of the table
+            maxi = 0
+            for i in range(len(table)):
+                cur_len = sum(getAllColLen(table)) + len(getAllColLen(table)) + 1 # "|" at borders and between cells
+                if maxi < cur_len:
+                    maxi = cur_len
+            return maxi
+
+        def drawBorder(table, y, colspan = {}, rowspan = {}):
+            col_widths = getAllColLen(table)
+            length = getMaxRowWidth(table)
+            cell_w_count = 0
+            cell_counter = 0
+            output = ""
+            for i in range(length):
+                if isInRowspan(y, cell_counter - 1, rowspan) and not (i == cell_w_count or i == length - 1):
+                    output += " "
+                elif i == cell_w_count or i == length - 1:
+                    output += "+"
+                    if cell_counter != getMaxRowLen(table):
+                        cell_w_count += col_widths[cell_counter] + 1
+                        cell_counter += 1
+                else:
+                    output += "-"
+            output += self.nl
+            return output
+
+        def drawTable(table, colspan = {}, rowspan = {}):
+            table_width = getMaxRowWidth(table)
+            col_widths = getAllColLen(table)
+            output = ""
+            for y, row in enumerate(table):
+                output += drawBorder(table, y, colspan, rowspan)
+                x = 0
+                while x < len(row): #altered for loop
+                    output += writeCell(table, y, x, col_widths[x], rowspan)
+                    if (y, x) in colspan.keys():
+                        colspan_value = colspan[(y, x)]
+                        output += writeColspanCell(sum(col_widths[x+1:x+colspan_value]), colspan_value)
+                        x += colspan_value - 1
+                    x += 1
+                output += "|" + self.nl #end table row
+            output += drawBorder(table, getMaxRowLen(table) - 1) #close bottom of table
+            return output
+
+
+        output = drawTable(self.table, self.table_colspan, self.table_rowspan)
+        self.add_text(output)
+
         self.table = None
+        self.table_colspec = None
+        self.table_rowspan = None
+        self.table_colspan = None
         self.end_state(wrap=False)
 
     def visit_acks(self, node):
